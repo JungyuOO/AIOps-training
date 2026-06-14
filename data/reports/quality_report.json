@@ -1,0 +1,65 @@
+{
+  "total": 11261,
+  "categories": {
+    "accelerator_serving_runtime": {
+      "count": 2252,
+      "avg_total": 15.0,
+      "structure": 3.0,
+      "cause": 3.0,
+      "evidence": 3.0,
+      "command": 3.0,
+      "safety": 3.0,
+      "gold": 2252,
+      "silver": 0,
+      "fail": 0
+    },
+    "application_connectivity": {
+      "count": 2252,
+      "avg_total": 14.5,
+      "structure": 3.0,
+      "cause": 3.0,
+      "evidence": 2.5,
+      "command": 3.0,
+      "safety": 3.0,
+      "gold": 2252,
+      "silver": 0,
+      "fail": 0
+    },
+    "configuration_identity": {
+      "count": 2252,
+      "avg_total": 13.13,
+      "structure": 3.0,
+      "cause": 3.0,
+      "evidence": 1.13,
+      "command": 3.0,
+      "safety": 3.0,
+      "gold": 2252,
+      "silver": 0,
+      "fail": 0
+    },
+    "platform_lifecycle_capacity": {
+      "count": 2253,
+      "avg_total": 14.12,
+      "structure": 3.0,
+      "cause": 3.0,
+      "evidence": 2.12,
+      "command": 3.0,
+      "safety": 3.0,
+      "gold": 2253,
+      "silver": 0,
+      "fail": 0
+    },
+    "storage_data_artifacts": {
+      "count": 2252,
+      "avg_total": 13.25,
+      "structure": 3.0,
+      "cause": 3.0,
+      "evidence": 1.25,
+      "command": 3.0,
+      "safety": 3.0,
+      "gold": 2252,
+      "silver": 0,
+      "fail": 0
+    }
+  }
+}
