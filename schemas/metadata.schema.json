@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OpenShift AIOps SFT metadata",
+  "type": "object",
+  "required": ["category", "difficulty", "expected_cause", "version"],
+  "properties": {
+    "category": { "type": "string" },
+    "difficulty": { "type": "string" },
+    "expected_cause": { "type": "string" },
+    "version": { "type": "string" },
+    "score_total": { "type": "number" },
+    "quality_tier": { "type": "string" },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}
