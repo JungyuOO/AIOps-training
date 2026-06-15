@@ -322,8 +322,12 @@ cells = [
         """
         from peft import LoraConfig, prepare_model_for_kbit_training
 
-        model.gradient_checkpointing_enable()
-        model = prepare_model_for_kbit_training(model)
+        # Keep gradient checkpointing disabled for stable restart/retrain behavior.
+        model.config.use_cache = False
+        model = prepare_model_for_kbit_training(
+            model,
+            use_gradient_checkpointing=False,
+        )
 
         lora_config = LoraConfig(
             r=64,
@@ -344,10 +348,10 @@ cells = [
         """
         import json
         from pathlib import Path
-        from transformers import TrainerCallback
+        from transformers import TrainerCallback, EarlyStoppingCallback
         from trl import SFTTrainer, SFTConfig
 
-        output_dir = str(base / "outputs/gemma3-12b-aiops-lora-v1")
+        output_dir = str(base / "outputs/gemma3-12b-aiops-lora-v2")
         train_logs = []
 
         class MetricsCallback(TrainerCallback):
@@ -356,7 +360,8 @@ cells = [
                     row = dict(logs)
                     row["step"] = state.global_step
                     train_logs.append(row)
-                    print(row)
+                    if "eval_loss" in row or state.global_step % 100 == 0:
+                        print(row)
 
             def on_train_end(self, args, state, control, **kwargs):
                 log_path = Path(args.output_dir) / "trainer_logs.jsonl"
@@ -375,12 +380,17 @@ cells = [
             learning_rate=5e-5,
             num_train_epochs=3,
             lr_scheduler_type="cosine",
-            warmup_ratio=0.1,
+            warmup_steps=100,
             logging_steps=10,
+            gradient_checkpointing=False,
             eval_strategy="steps",
             eval_steps=100,
-            save_steps=250,
-            save_total_limit=3,
+            save_strategy="steps",
+            save_steps=100,
+            save_total_limit=8,
+            load_best_model_at_end=True,
+            metric_for_best_model="eval_loss",
+            greater_is_better=False,
             bf16=True,
             report_to="none",
             packing=False,
@@ -393,13 +403,21 @@ cells = [
             eval_dataset=text_dataset["eval"],
             processing_class=tokenizer,
             peft_config=lora_config,
-            callbacks=[MetricsCallback()],
+            callbacks=[
+                MetricsCallback(),
+                EarlyStoppingCallback(early_stopping_patience=5),
+            ],
         )
 
         trainer.train()
+        best_checkpoint = trainer.state.best_model_checkpoint
+        print("best checkpoint:", best_checkpoint)
+        print("best eval loss:", trainer.state.best_metric)
+
+        # With load_best_model_at_end=True, trainer.model is restored to the best checkpoint.
         trainer.save_model(output_dir)
         tokenizer.save_pretrained(output_dir)
-        print("saved adapter:", output_dir)
+        print("saved best adapter:", output_dir)
         """
     ),
     markdown("## 9. Evaluation Metrics And Loss Graphs"),
@@ -570,7 +588,7 @@ cells = [
         access_key = "admin"
         secret_key = "admin123"
         bucket = "rhoai-models"
-        adapter_prefix = "aiops-adapters/gemma3-12b-aiops-lora-v1"
+        adapter_prefix = "aiops-adapters/gemma3-12b-aiops-lora-v2"
 
         s3 = boto3.client(
             "s3",
@@ -610,7 +628,7 @@ cells = [
         """
         ## Output Files
 
-        학습이 끝나면 기본 산출물은 `~/aiops-gemma3/outputs/gemma3-12b-aiops-lora-v1` 아래에 생성됩니다.
+        학습이 끝나면 기본 산출물은 `~/aiops-gemma3/outputs/gemma3-12b-aiops-lora-v2` 아래에 생성됩니다.
 
         - `adapter_config.json`
         - `adapter_model.safetensors`
@@ -623,8 +641,8 @@ cells = [
         - `learning_rate_graph.png`
         - `sample_outputs.md`
         - `metric_report.md`
-        - `../gemma3-12b-aiops-lora-v1.tar.gz`
-        - MinIO upload prefix: `s3://rhoai-models/aiops-adapters/gemma3-12b-aiops-lora-v1/`
+        - `../gemma3-12b-aiops-lora-v2.tar.gz`
+        - MinIO upload prefix: `s3://rhoai-models/aiops-adapters/gemma3-12b-aiops-lora-v2/`
         """
     ),
 ]
